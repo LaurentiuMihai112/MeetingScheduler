@@ -18,11 +18,31 @@ class Utils:
 
     @staticmethod
     def add_person(firstname, lastname):
-        sql = "INSERT INTO Persons (firstname, lastname) VALUES (%s, %s)"
-        val = (firstname, lastname)
-        cursor = Utils.connection.cursor()
-        print(cursor.execute(sql, val))
-        Utils.connection.commit()
+        try:
+            sql = "INSERT INTO Persons (firstname, lastname) VALUES (%s, %s)"
+            val = (firstname, lastname)
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql, val)
+            Utils.connection.commit()
+        except Exception as e:
+            return str(e)
+        return True
+
+    @staticmethod
+    def get_person(firstname, lastname):
+        try:
+            sql = "SELECT firstname, lastname FROM Persons WHERE firstname=%s and lastname=%s"
+            val = (firstname, lastname)
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql, val)
+            person = None
+            person = cursor.fetchone()
+            cursor.close()
+            if person is not None:
+                return True
+            return False
+        except Exception as e:
+            return str(e)
 
     @staticmethod
     def add_meeting(start_date, end_date):
