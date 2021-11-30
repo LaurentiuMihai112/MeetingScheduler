@@ -46,8 +46,23 @@ class Utils:
 
     @staticmethod
     def add_meeting(start_date, end_date):
-        pass
+        try:
+            sql = "INSERT INTO Meetings (startdate, enddate) VALUES (%s, %s)"
+            val = (start_date, end_date)
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql, val)
+            Utils.connection.commit()
+        except Exception as e:
+            return str(e)
+        return True
 
     @staticmethod
     def get_all_meetings(start_date, end_date):
-        pass
+        try:
+            sql = "SELECT * FROM Meetings WHERE startdate>=%s AND enddate<=%s"
+            val = (start_date, end_date)
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql, val)
+            return cursor.fetchall()
+        except Exception as e:
+            return str(e)
