@@ -1,6 +1,6 @@
 import datetime
 import tkinter as tk
-from tkinter import messagebox, END, RIGHT, BOTH, MULTIPLE
+from tkinter import messagebox, END, RIGHT, BOTH, MULTIPLE, font
 
 import pytz
 import tkcalendar
@@ -18,25 +18,26 @@ class MeetingScheduler:
         self.window.geometry('1200x750')
         self.window.configure(bg='#E3F6FF')
         self.buttons_frame = tk.Frame()
+        my_font = font.Font(family='Consolas', size=15,weight='bold')
         self.buttons_frame.pack(side='left')
         self.add_button = tk.Button(self.buttons_frame, text='Add person', activebackground='#4B93B7',
-                                    bg='#64CBFF', padx=10, pady=10,
+                                    bg='#64CBFF', padx=10, pady=10, width=15, font=my_font,
                                     command=self.add_command)
         self.add_button.grid(row=0, column=0, padx=10, pady=10)
         self.schedule_meeting_button = tk.Button(self.buttons_frame, text='New meeting', activebackground='#4B93B7',
-                                                 bg='#64CBFF', padx=10, pady=10,
+                                                 bg='#64CBFF', padx=10, pady=10, width=15, font=my_font,
                                                  command=self.schedule_meeting_command)
         self.schedule_meeting_button.grid(row=2, column=0, padx=10, pady=10)
         self.view_meetings_button = tk.Button(self.buttons_frame, text='View meetings', activebackground='#4B93B7',
-                                              bg='#64CBFF', padx=10, pady=10,
+                                              bg='#64CBFF', padx=10, pady=10, width=15, font=my_font,
                                               command=self.view_meetings_command)
         self.view_meetings_button.grid(row=4, column=0, padx=10, pady=10)
         self.export_button = tk.Button(self.buttons_frame, text='Export', activebackground='#4B93B7',
-                                       bg='#64CBFF', padx=10, pady=10,
+                                       bg='#64CBFF', padx=10, pady=10, width=15, font=my_font,
                                        command=self.export_command)
         self.export_button.grid(row=6, column=0, padx=10, pady=10)
         self.import_button = tk.Button(self.buttons_frame, text='Import', activebackground='#4B93B7',
-                                       bg='#64CBFF', padx=10, pady=10,
+                                       bg='#64CBFF', padx=10, pady=10, width=15, font=my_font,
                                        command=self.import_command)
         self.import_button.grid(row=8, column=0, padx=10, pady=10)
         self.content_frame = None
@@ -191,7 +192,7 @@ class MeetingScheduler:
         persons = self.get_selected_persons()
         for p in persons:
             person = p
-            lastname, firstname,= person.split(' ')
+            lastname, firstname, = person.split(' ')
             print(lastname)
             print(firstname)
             Utils.add_participants(meeting_id, Utils.get_person_id(firstname, lastname))
