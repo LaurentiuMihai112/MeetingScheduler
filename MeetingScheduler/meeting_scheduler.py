@@ -1,11 +1,11 @@
 import datetime
 import tkinter as tk
-from tkinter import messagebox, END, RIGHT, BOTH, MULTIPLE, font
+from tkinter import messagebox, END, MULTIPLE, font
 
 import pytz
 import tkcalendar
-from tkcalendar import Calendar
 from icalendar import Calendar, Event
+from tkcalendar import Calendar
 
 from database_utils import Utils
 
@@ -18,7 +18,7 @@ class MeetingScheduler:
         self.window.geometry('1200x750')
         self.window.configure(bg='#E3F6FF')
         self.buttons_frame = tk.Frame()
-        my_font = font.Font(family='Consolas', size=15,weight='bold')
+        my_font = font.Font(family='Consolas', size=15, weight='bold')
         self.buttons_frame.pack(side='left')
         self.add_button = tk.Button(self.buttons_frame, text='Add person', activebackground='#4B93B7',
                                     bg='#64CBFF', padx=10, pady=10, width=15, font=my_font,
