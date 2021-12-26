@@ -1,6 +1,6 @@
 import datetime
 import tkinter as tk
-from tkinter import messagebox, END, MULTIPLE, font
+from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER
 
 import pytz
 import tkcalendar
@@ -51,6 +51,13 @@ class MeetingScheduler:
         self.start_hour_frame = None
         self.end_hour_frame = None
         self.new_meeting_button = None
+        self.add_person_var = None
+        self.add_person_listbox = None
+        self.start_minutes_variable = None
+        self.end_minutes_variable = None
+        self.participants_frame = None
+        self.participants_label = None
+        self.participants_listbox = None
         self.window.mainloop()
 
     def add_command(self):
@@ -91,18 +98,25 @@ class MeetingScheduler:
                                                      month=int(current_date.strftime('%m')),
                                                      day=int(current_date.strftime('%d')))
         self.end_date_calendar.grid(row=1, column=3, padx=10, pady=10)
+        hour_values = ('00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15',
+                       '16', '17', '18', '19', '20', '21', '22', '23')
         self.start_hour_variable = tk.StringVar()
-        self.start_hour_variable.set(current_date.strftime('%H'))
         self.end_hour_variable = tk.StringVar()
-        self.end_hour_variable.set(str(int(current_date.strftime('%H')) + 1))
+        self.start_minutes_variable = tk.StringVar()
+        self.end_minutes_variable = tk.StringVar()
+        current_hour = MeetingScheduler.fix_hour(current_date.strftime('%H'))
         self.start_hour_frame = tk.Frame(self.content_frame)
         self.end_hour_frame = tk.Frame(self.content_frame)
-
-        start_hour_spinbox = tk.Spinbox(self.start_hour_frame, from_=0, to=23, wrap=True, width=2, state="readonly",
+        start_hour_spinbox = tk.Spinbox(self.start_hour_frame, values=hour_values, wrap=True, width=2, state="readonly",
                                         justify='center', textvariable=self.start_hour_variable)
 
-        end_hour_spinbox = tk.Spinbox(self.end_hour_frame, from_=0, to=23, wrap=True, width=2, state="readonly",
+        end_hour_spinbox = tk.Spinbox(self.end_hour_frame, values=hour_values, wrap=True, width=2, state="readonly",
                                       justify='center', textvariable=self.end_hour_variable)
+        start_minutes_spinbox = tk.Spinbox(self.start_hour_frame, values=('00', '15', '30', '45'), wrap=True, width=2,
+                                           state="readonly", justify='center', textvariable=self.start_minutes_variable)
+
+        end_minutes_spinbox = tk.Spinbox(self.end_hour_frame, values=('00', '15', '30', '45'), wrap=True, width=2,
+                                         state="readonly", justify='center', textvariable=self.end_minutes_variable)
         self.start_hour_frame.grid(row=2, column=0)
         self.end_hour_frame.grid(row=2, column=3)
 
@@ -117,8 +131,12 @@ class MeetingScheduler:
             self.add_person_listbox.insert(END, p[0])
         start_hour_spinbox.grid(row=0, column=0)
         end_hour_spinbox.grid(row=0, column=0)
+        start_minutes_spinbox.grid(row=0, column=1)
+        end_minutes_spinbox.grid(row=0, column=1)
         self.new_meeting_button.grid(row=1, column=5, padx=10, pady=10)
         self.add_person_listbox.grid(row=1, column=4, pady=10)
+        self.start_hour_variable.set(current_hour)
+        self.end_hour_variable.set(MeetingScheduler.fix_hour(str(int(current_hour) + 1)))
 
     def get_selected_persons(self):
         persons = []
@@ -132,6 +150,35 @@ class MeetingScheduler:
         except Exception as e:
             print(str(e))
         self.content_frame = tk.Frame()
+        self.content_frame.pack(side='left')
+        meetings = Utils.get_all_meetings(datetime.datetime.now() - datetime.timedelta(days=1000),
+                                          datetime.datetime.now() + datetime.timedelta(days=1000))
+        self.meetings_view = ttk.Treeview(self.content_frame, show='headings')
+        self.meetings_view.bind('<Double-1>', self.update_participants)
+        columns = ("meeting_id", "meeting_start", "meeting_end")
+        self.meetings_view['columns'] = columns
+        for col in columns:
+            self.meetings_view.heading(col, text=col,
+                                       command=lambda: MeetingScheduler.treeview_sort_column(self.meetings_view, col,
+                                                                                             False))
+        self.meetings_view.column("#0", width=0, stretch=NO)
+        self.meetings_view.column("meeting_id", anchor=CENTER, width=80)
+        self.meetings_view.column("meeting_start", anchor=CENTER, width=150)
+        self.meetings_view.column("meeting_end", anchor=CENTER, width=150)
+        self.meetings_view.heading("#0", text="", anchor=CENTER)
+        self.meetings_view.heading("meeting_id", text="Id", anchor=CENTER)
+        self.meetings_view.heading("meeting_start", text="Start Date", anchor=CENTER)
+        self.meetings_view.heading("meeting_end", text="End Date", anchor=CENTER)
+        for i, m in enumerate(meetings):
+            self.meetings_view.insert(parent='', index='end', iid=i, text='', values=m)
+
+        self.meetings_view.pack(side='left', padx=10, pady=10)
+        self.participants_frame = tk.Frame(self.content_frame)
+        self.participants_frame.pack(side='right', padx=10)
+        self.participants_label = tk.Label(self.participants_frame, text='Participants')
+        self.participants_label.pack(side='top')
+        self.participants_listbox = tk.Listbox(self.participants_frame, height=10, width=40, justify='center')
+        self.participants_listbox.pack(side='top')
         # view meetings logic
 
     def export_command(self):
@@ -180,9 +227,11 @@ class MeetingScheduler:
         ey = "20" + ey
 
         start_hour = self.start_hour_variable.get()
+        start_minutes = self.start_minutes_variable.get()
         end_hour = self.end_hour_variable.get()
-        full_start_date = datetime.datetime(int(sy), int(sm), int(sd), int(start_hour))
-        full_end_date = datetime.datetime(int(ey), int(em), int(ed), int(end_hour))
+        end_minutes = self.end_minutes_variable.get()
+        full_start_date = datetime.datetime(int(sy), int(sm), int(sd), int(start_hour), int(start_minutes))
+        full_end_date = datetime.datetime(int(ey), int(em), int(ed), int(end_hour), int(end_minutes))
         if full_end_date <= full_start_date:
             tk.messagebox.showerror(title="Date selection error",
                                     message=f"End date must be after start date")
@@ -193,8 +242,6 @@ class MeetingScheduler:
         for p in persons:
             person = p
             lastname, firstname, = person.split(' ')
-            print(lastname)
-            print(firstname)
             Utils.add_participants(meeting_id, Utils.get_person_id(firstname, lastname))
 
     def export_meetings(self, startdate, enddate):
@@ -214,8 +261,26 @@ class MeetingScheduler:
             f.write(cal.to_ical())
             f.close()
 
+    def update_participants(self, _):
+        item = self.meetings_view.selection()[0]
+        meeting_id = self.meetings_view.item(item, "values")[0]
+        participants = Utils.get_participants(meeting_id)
+        self.participants_listbox.delete(0, END)
+        for p_id in participants:
+            self.participants_listbox.insert(END, Utils.get_person_by_id(p_id)[0])
+
     @staticmethod
     def fix_hour(hour):
-        if hour < 10:
+        if int(hour) < 10:
             return f"0{hour}"
-        return hour
+        return f"{hour}"
+
+    @staticmethod
+    def treeview_sort_column(tv, col, reverse):
+        rows = [(tv.set(k, col), k) for k in tv.get_children('')]
+        rows.sort(reverse=reverse)
+
+        for index, (val, k) in enumerate(rows):
+            tv.move(k, '', index)
+
+        tv.heading(col, command=lambda: MeetingScheduler.treeview_sort_column(tv, col, not reverse))
