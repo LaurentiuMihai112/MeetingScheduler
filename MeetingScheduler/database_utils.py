@@ -83,6 +83,19 @@ class Utils:
         return True
 
     @staticmethod
+    def get_participants(meeting_id: str):
+        try:
+            sql = "SELECT person_id FROM MeetingParticipants WHERE meeting_id='{0}'".format(meeting_id)
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql)
+            ids = cursor.fetchall()
+            cursor.close()
+            return ids
+        except Exception as e:
+            print(str(e))
+            return None
+
+    @staticmethod
     def get_meeting_id(start_date, end_date):
         try:
             sql = "SELECT meeting_id FROM Meetings WHERE startdate=%s AND enddate=%s"
@@ -118,3 +131,14 @@ class Utils:
         except Exception as e:
             return str(e)
 
+    @staticmethod
+    def get_person_by_id(id: str):
+        try:
+            sql = "SELECT CONCAT(lastname,' ',firstname) FROM Persons WHERE person_id=%s"
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql, id)
+            person = cursor.fetchone()
+            cursor.close()
+            return person
+        except Exception as e:
+            return str(e)
