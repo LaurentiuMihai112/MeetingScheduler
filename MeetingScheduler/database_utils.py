@@ -178,8 +178,8 @@ class Utils:
     @staticmethod
     def get_all_persons():
         """
-
-        :return:
+        shall retrieve all persons from database
+        :return: List of lists
         """
         try:
             sql = "SELECT CONCAT(lastname,' ',firstname) FROM Persons"
@@ -194,9 +194,9 @@ class Utils:
     @staticmethod
     def get_person_by_id(id: str):
         """
-        
-        :param id:
-        :return:
+        Shall retrieve a specified person from the database
+        :param id: the id of a person
+        :return: the person with the specified id, None otherwise
         """
         try:
             sql = "SELECT CONCAT(lastname,' ',firstname) FROM Persons WHERE person_id=%s"
@@ -206,4 +206,5 @@ class Utils:
             cursor.close()
             return person
         except Exception as e:
-            return str(e)
+            print(str(e))
+            return None
