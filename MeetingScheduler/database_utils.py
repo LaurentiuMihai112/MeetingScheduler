@@ -208,3 +208,21 @@ class Utils:
         except Exception as e:
             print(str(e))
             return None
+
+    @staticmethod
+    def get_meeting_description(meeting_id):
+        """
+        Shall find a meeting with a given id and retrieve it's description
+        :param meeting_id: the meeting id
+        :return: String(description), None for exceptions or no meeting found
+        """
+        try:
+            sql = "SELECT description FROM Meetings WHERE meeting_id='{0}'".format(meeting_id)
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql)
+            desc = cursor.fetchall()
+            cursor.close()
+            return desc
+        except Exception as e:
+            print(str(e))
+            return None
