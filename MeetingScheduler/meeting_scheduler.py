@@ -1,6 +1,6 @@
 import datetime
 import tkinter as tk
-from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER
+from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER, INSERT
 
 import icalendar
 import pytz
@@ -175,14 +175,19 @@ class MeetingScheduler:
         self.meetings_view.heading("meeting_end", text="End Date", anchor=CENTER)
         for i, m in enumerate(meetings):
             self.meetings_view.insert(parent='', index='end', iid=i, text='', values=m)
+        self.description_frame = tk.Frame(self.content_frame)
+        tk.Label(self.description_frame, text='Description').pack(side='top')
+        self.description_entry = tk.Text(self.description_frame, height=10, width=30)
 
         self.meetings_view.pack(side='left', padx=10, pady=10)
         self.participants_frame = tk.Frame(self.content_frame)
-        self.participants_frame.pack(side='right', padx=10)
+        self.participants_frame.pack(side='left', padx=10)
         self.participants_label = tk.Label(self.participants_frame, text='Participants')
         self.participants_label.pack(side='top')
         self.participants_listbox = tk.Listbox(self.participants_frame, height=10, width=40, justify='center')
         self.participants_listbox.pack(side='top')
+        self.description_entry.pack(side='top')
+        self.description_frame.pack(side='left')
         # view meetings logic
 
     def export_command(self):
@@ -293,6 +298,10 @@ class MeetingScheduler:
         self.participants_listbox.delete(0, END)
         for p_id in participants:
             self.participants_listbox.insert(END, Utils.get_person_by_id(p_id)[0])
+        description = Utils.get_meeting_description(meeting_id)
+        self.description_entry.delete('1.0', END)
+        if description is not None:
+            self.description_entry.insert('1.0', str(description[0][0]))
 
     @staticmethod
     def fix_hour(hour):
