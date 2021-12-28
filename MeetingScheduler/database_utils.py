@@ -82,7 +82,7 @@ class Utils:
             return None
 
     @staticmethod
-    def add_meeting(start_date, end_date):
+    def add_meeting(start_date, end_date, description):
         """
         Method to schedule a new meeting
         :param start_date: start date of the meeting
@@ -90,8 +90,8 @@ class Utils:
         :return: True if the meeting was created, False otherwise
         """
         try:
-            sql = "INSERT INTO Meetings (startdate, enddate) VALUES (%s, %s)"
-            val = (start_date, end_date)
+            sql = "INSERT INTO Meetings (startdate, enddate,description) VALUES (%s, %s,%s)"
+            val = (start_date, end_date, description)
             cursor = Utils.connection.cursor()
             cursor.execute(sql, val)
             Utils.connection.commit()
