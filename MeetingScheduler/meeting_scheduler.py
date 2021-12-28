@@ -286,29 +286,26 @@ class MeetingScheduler:
         file.write(cal.to_ical())
         file.close()
 
+    def update_participants(self, _):
+        item = self.meetings_view.selection()[0]
+        meeting_id = self.meetings_view.item(item, "values")[0]
+        participants = Utils.get_participants(meeting_id)
+        self.participants_listbox.delete(0, END)
+        for p_id in participants:
+            self.participants_listbox.insert(END, Utils.get_person_by_id(p_id)[0])
 
-def update_participants(self, _):
-    item = self.meetings_view.selection()[0]
-    meeting_id = self.meetings_view.item(item, "values")[0]
-    participants = Utils.get_participants(meeting_id)
-    self.participants_listbox.delete(0, END)
-    for p_id in participants:
-        self.participants_listbox.insert(END, Utils.get_person_by_id(p_id)[0])
+    @staticmethod
+    def fix_hour(hour):
+        if int(hour) < 10:
+            return f"0{hour}"
+        return f"{hour}"
 
+    @staticmethod
+    def treeview_sort_column(tv, col, reverse):
+        rows = [(tv.set(k, col), k) for k in tv.get_children('')]
+        rows.sort(reverse=reverse)
 
-@staticmethod
-def fix_hour(hour):
-    if int(hour) < 10:
-        return f"0{hour}"
-    return f"{hour}"
+        for index, (val, k) in enumerate(rows):
+            tv.move(k, '', index)
 
-
-@staticmethod
-def treeview_sort_column(tv, col, reverse):
-    rows = [(tv.set(k, col), k) for k in tv.get_children('')]
-    rows.sort(reverse=reverse)
-
-    for index, (val, k) in enumerate(rows):
-        tv.move(k, '', index)
-
-    tv.heading(col, command=lambda: MeetingScheduler.treeview_sort_column(tv, col, not reverse))
+        tv.heading(col, command=lambda: MeetingScheduler.treeview_sort_column(tv, col, not reverse))
