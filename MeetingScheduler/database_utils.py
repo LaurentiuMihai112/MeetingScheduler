@@ -74,9 +74,9 @@ class Utils:
             val = (firstname, lastname)
             cursor = Utils.connection.cursor()
             cursor.execute(sql, val)
-            id = cursor.fetchone()
+            person_id = cursor.fetchone()
             cursor.close()
-            return id
+            return person_id
         except Exception as e:
             print(str(e))
             return None
@@ -87,7 +87,9 @@ class Utils:
         Method to schedule a new meeting
         :param start_date: start date of the meeting
         :param end_date: end date of the meeting
+        :param description: the meeting description
         :return: True if the meeting was created, False otherwise
+
         """
         try:
             sql = "INSERT INTO Meetings (startdate, enddate,description) VALUES (%s, %s,%s)"
@@ -152,9 +154,9 @@ class Utils:
             val = (start_date, end_date)
             cursor = Utils.connection.cursor()
             cursor.execute(sql, val)
-            id = cursor.fetchone()
+            meeting_id = cursor.fetchone()
             cursor.close()
-            return id
+            return meeting_id
         except Exception as e:
             return str(e)
 
@@ -192,16 +194,16 @@ class Utils:
             return str(e)
 
     @staticmethod
-    def get_person_by_id(id: str):
+    def get_person_by_id(person_id: str):
         """
         Shall retrieve a specified person from the database
-        :param id: the id of a person
+        :param person_id: the id of a person
         :return: the person with the specified id, None otherwise
         """
         try:
             sql = "SELECT CONCAT(lastname,' ',firstname) FROM Persons WHERE person_id=%s"
             cursor = Utils.connection.cursor()
-            cursor.execute(sql, id)
+            cursor.execute(sql, person_id)
             person = cursor.fetchone()
             cursor.close()
             return person
