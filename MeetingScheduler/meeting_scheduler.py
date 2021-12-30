@@ -1,9 +1,8 @@
 import datetime
 import tkinter as tk
-from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER, INSERT
+from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER, filedialog
 
 import icalendar
-import pytz
 import tkcalendar
 from icalendar import Calendar, Event
 
@@ -59,13 +58,14 @@ class MeetingScheduler:
         self.participants_label = None
         self.participants_listbox = None
         self.meetings_view = None
+        self.file_entry = None
+        self.description_frame = None
+        self.description_entry = None
+        self.file_content = None
         self.window.mainloop()
 
     def add_command(self):
-        try:
-            self.content_frame.destroy()
-        except Exception as e:
-            print(str(e))
+        self.destroy_content_frame()
         self.content_frame = tk.Frame(pady=10)
         self.content_frame.pack(side='left')
         tk.Label(self.content_frame, text="Firstname").grid(row=0)
@@ -81,10 +81,7 @@ class MeetingScheduler:
         self.add_person_to_database_button.grid(row=1, column=4, padx=10, pady=10)
 
     def schedule_meeting_command(self):
-        try:
-            self.content_frame.destroy()
-        except Exception as e:
-            print(str(e))
+        self.destroy_content_frame()
         self.content_frame = tk.Frame(self.window, pady=10, height=150)
         self.content_frame.pack(side='left')
         current_date = datetime.datetime.now()
@@ -149,10 +146,7 @@ class MeetingScheduler:
         return persons
 
     def view_meetings_command(self):
-        try:
-            self.content_frame.destroy()
-        except Exception as e:
-            print(str(e))
+        self.destroy_content_frame()
         self.content_frame = tk.Frame()
         self.content_frame.pack(side='left')
         meetings = Utils.get_all_meetings(datetime.datetime.now() - datetime.timedelta(days=1000),
@@ -191,10 +185,7 @@ class MeetingScheduler:
         # view meetings logic
 
     def export_command(self):
-        try:
-            self.content_frame.destroy()
-        except Exception as e:
-            print(str(e))
+        self.destroy_content_frame()
         self.content_frame = tk.Frame(self.window, pady=10, height=150)
         self.content_frame.pack(side='left')
         current_date = datetime.datetime.now()
@@ -215,11 +206,42 @@ class MeetingScheduler:
                                                                                                 padx=10, pady=10)
 
     def import_command(self):
-        try:
-            self.content_frame.destroy()
-        except Exception as e:
-            print(str(e))
+        self.destroy_content_frame()
         self.content_frame = tk.Frame()
+        self.content_frame = tk.Frame(self.window, pady=10, height=150)
+        self.content_frame.pack(side='left')
+        tk.Label(self.content_frame, text="Imported File").grid(row=0, column=0)
+        tk.Button(self.content_frame, text='Browse', activebackground='#4B93B7', bg='#64CBFF', padx=10, pady=10,
+                  command=self.browse_files).grid(row=1, column=1, padx=10, pady=10)
+        self.file_entry = tk.Text(self.content_frame, width=40, height=2)
+        self.file_entry.grid(row=0, column=1, padx=10, pady=10)
+        tk.Label(self.content_frame, text="Content").grid(row=0, column=2, padx=10, pady=10)
+        self.file_content = tk.Text(self.content_frame, height=10, width=45)
+        self.file_content.grid(row=1, column=2, padx=10, pady=10)
+        tk.Button(self.content_frame, text='Import Meetings', activebackground='#4B93B7', bg='#64CBFF', padx=10,
+                  pady=10, command=self.import_meetings).grid(row=1, column=3, padx=10, pady=10)
+
+    def browse_files(self):
+        filename = filedialog.askopenfilename(initialdir=".", title="Select a File")
+        f = open(filename, 'r')
+        content = f.read(10000)
+
+        self.file_content.delete('1.0', END)
+        self.file_content.insert('1.0', content)
+        self.file_entry.delete('1.0', END)
+        self.file_entry.insert('1.0', filename)
+
+    def import_meetings(self):
+        file_calendar = Calendar.from_ical(self.file_content.get('1.0', END))
+        for component in file_calendar.walk():
+            if component.name == "VEVENT":
+                print(component.get('summary'))
+                print(component.get('dtstart').dt)
+                print(component.get('dtend').dt)
+                summary = component.get('summary')
+                dtstart = component.get('dtstart')
+                dtend = component.get('dtend')
+                Utils.add_meeting(dtstart.dt, dtend.dt, summary)
 
     def add_person_to_database(self):
         firstname = self.firstname_entry.get().capitalize()
@@ -269,6 +291,9 @@ class MeetingScheduler:
             lastname, firstname, = person.split(' ')
             Utils.add_participants(meeting_id, Utils.get_person_id(firstname, lastname))
         tk.messagebox.showinfo(title="Success", message=f"The meeting was created")
+
+    def destroy_content_frame(self):
+        self.destroy_content_frame()
 
     @staticmethod
     def export_meetings(start_date, end_date):
