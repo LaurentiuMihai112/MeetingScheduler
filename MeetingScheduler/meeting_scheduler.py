@@ -1,16 +1,17 @@
 import datetime
 import tkinter as tk
-from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER, filedialog
-
 import icalendar
 import tkcalendar
+from tkinter import messagebox, END, MULTIPLE, font, ttk, NO, CENTER, filedialog
 from icalendar import Calendar, Event
-
 from database_utils import Utils
 
 
 class MeetingScheduler:
     def __init__(self):
+        """
+        Constructor that creates main window
+        """
         self.window = tk.Tk()
         self.window.title('Meeting Scheduler')
         self.window.resizable(0, 0)
@@ -65,6 +66,11 @@ class MeetingScheduler:
         self.window.mainloop()
 
     def add_command(self):
+        """
+        Method to create UI for adding a person
+        :return: None
+        """
+
         self.destroy_content_frame()
         self.content_frame = tk.Frame(pady=10)
         self.content_frame.pack(side='left')
@@ -81,6 +87,10 @@ class MeetingScheduler:
         self.add_person_to_database_button.grid(row=1, column=4, padx=10, pady=10)
 
     def schedule_meeting_command(self):
+        """
+        Method to create UI for scheduling a meeting
+        :return: None
+        """
         self.destroy_content_frame()
         self.content_frame = tk.Frame(self.window, pady=10, height=150)
         self.content_frame.pack(side='left')
@@ -140,12 +150,20 @@ class MeetingScheduler:
         self.end_hour_variable.set(MeetingScheduler.fix_hour(str(int(current_hour) + 2)))
 
     def get_selected_persons(self):
+        """
+        Methid to get selected persons, used as participants for creating meetings
+        :return: List of String
+        """
         persons = []
         for i in self.add_person_listbox.curselection():
             persons.append(self.add_person_listbox.get(i))
         return persons
 
     def view_meetings_command(self):
+        """
+        Method to create UI for viewing meetings
+        :return: None
+        """
         self.destroy_content_frame()
         self.content_frame = tk.Frame()
         self.content_frame.pack(side='left')
@@ -185,6 +203,10 @@ class MeetingScheduler:
         # view meetings logic
 
     def export_command(self):
+        """
+        Method to create UI for exporting meetings
+        :return: None
+        """
         self.destroy_content_frame()
         self.content_frame = tk.Frame(self.window, pady=10, height=150)
         self.content_frame.pack(side='left')
@@ -206,6 +228,10 @@ class MeetingScheduler:
                                                                                                 padx=10, pady=10)
 
     def import_command(self):
+        """
+        Method to create UI for importing meetings
+        :return: None
+        """
         self.destroy_content_frame()
         self.content_frame = tk.Frame()
         self.content_frame = tk.Frame(self.window, pady=10, height=150)
@@ -213,15 +239,22 @@ class MeetingScheduler:
         tk.Label(self.content_frame, text="Imported File").grid(row=0, column=0)
         tk.Button(self.content_frame, text='Browse', activebackground='#4B93B7', bg='#64CBFF', padx=10, pady=10,
                   command=self.browse_files).grid(row=1, column=1, padx=10, pady=10)
-        self.file_entry = tk.Text(self.content_frame, width=40, height=2)
+        self.file_entry = tk.Text(self.content_frame, width=30, height=2)
         self.file_entry.grid(row=0, column=1, padx=10, pady=10)
         tk.Label(self.content_frame, text="Content").grid(row=0, column=2, padx=10, pady=10)
-        self.file_content = tk.Text(self.content_frame, height=10, width=45)
+        self.file_content = tk.Text(self.content_frame, height=10, width=35)
         self.file_content.grid(row=1, column=2, padx=10, pady=10)
         tk.Button(self.content_frame, text='Import Meetings', activebackground='#4B93B7', bg='#64CBFF', padx=10,
                   pady=10, command=self.import_meetings).grid(row=1, column=3, padx=10, pady=10)
+        tk.Label(self.content_frame, text="Your Name:").grid(row=0, column=4, padx=10, pady=10)
+        self.name_entry = tk.Entry(self.content_frame)
+        self.name_entry.grid(row=1, column=4, padx=10, pady=10)
 
     def browse_files(self):
+        """
+        Method to browse files for importing
+        :return: None
+        """
         filename = filedialog.askopenfilename(initialdir=".", title="Select a File")
         f = open(filename, 'r')
         content = f.read(10000)
@@ -232,18 +265,45 @@ class MeetingScheduler:
         self.file_entry.insert('1.0', filename)
 
     def import_meetings(self):
-        file_calendar = Calendar.from_ical(self.file_content.get('1.0', END))
-        for component in file_calendar.walk():
-            if component.name == "VEVENT":
-                print(component.get('summary'))
-                print(component.get('dtstart').dt)
-                print(component.get('dtend').dt)
-                summary = component.get('summary')
-                dtstart = component.get('dtstart')
-                dtend = component.get('dtend')
-                Utils.add_meeting(dtstart.dt, dtend.dt, summary)
+        """
+        Method to handle importing meetings from .ics files
+        :return: None
+        """
+        try:
+            lastname, firstname = str(self.name_entry.get()).split(' ')
+            lastname = str(lastname).capitalize()
+            firstname = str(firstname).capitalize()
+            print(lastname + " " + firstname)
+            status = Utils.get_person_id(lastname, firstname)
+            status_second = Utils.get_person_id(firstname, lastname)
+            if status:
+                p_id = status
+            elif status_second:
+                p_id = status_second
+            else:
+                Utils.add_person(firstname, lastname)
+                p_id = Utils.get_person_id(firstname, lastname)
+            file_calendar = Calendar.from_ical(self.file_content.get('1.0', END))
+
+            for component in file_calendar.walk():
+                if component.name == "VEVENT":
+                    print(component.get('summary'))
+                    print(component.get('dtstart').dt)
+                    print(component.get('dtend').dt)
+                    summary = component.get('summary')
+                    dtstart = component.get('dtstart')
+                    dtend = component.get('dtend')
+                    Utils.add_meeting(dtstart.dt, dtend.dt, summary)
+                    m_id = Utils.get_meeting_id(dtstart.dt, dtend.dt)
+                    Utils.add_participants(m_id, p_id)
+        except Exception as _:
+            tk.messagebox.showerror(title="Name Error",message="You must provide a name")
 
     def add_person_to_database(self):
+        """
+        Method to handle adding a person from UI fields to the database
+        :return: None
+        """
         firstname = self.firstname_entry.get().capitalize()
         lastname = self.lastname_entry.get().capitalize()
         if Utils.get_person(firstname, lastname):
@@ -262,6 +322,10 @@ class MeetingScheduler:
                                     message=f"Failed to add person to database\nCause:{status}")
 
     def add_new_meeting(self):
+        """
+        Method to handle adding a meetings from UI fields to the database
+        :return: None
+        """
         persons = self.get_selected_persons()
         if not persons:
             tk.messagebox.showerror(title="Selection error",
@@ -293,19 +357,29 @@ class MeetingScheduler:
         tk.messagebox.showinfo(title="Success", message=f"The meeting was created")
 
     def destroy_content_frame(self):
-        self.destroy_content_frame()
+        """
+        Method for updating UI frames between different functionalities
+        :return: None
+        """
+        try:
+            self.content_frame.destroy()
+        except AttributeError as _:
+            pass
 
     @staticmethod
     def export_meetings(start_date, end_date):
+        """
+        Exports meetings between start date and end date in a .ics file
+        :param start_date: start date 
+        :param end_date: end date
+        :return: None
+        """
         print("exporting")
         meetings = Utils.get_all_meetings(start_date, end_date)
         cal = icalendar.Calendar()
-        # cal.add('attendee', 'MAILTO:abc@example.com')
-        # cal.add('attendee', 'MAILTO:xyz@example.com')
         name = f"{str(start_date).replace(' ', '_').replace('/', '.')[:10]}-" \
                f"{str(end_date).replace(' ', '_').replace('/', '.')[:10]}"
         for meeting in meetings:
-            # print(meeting)
             event = Event()
             event.add('dtstart', meeting[1])
             event.add('dtend', meeting[2])
@@ -317,6 +391,11 @@ class MeetingScheduler:
         file.close()
 
     def update_participants(self, _):
+        """
+        Updates the UI with each meeting's participants
+        :param _: the mouse event
+        :return: None
+        """
         item = self.meetings_view.selection()[0]
         meeting_id = self.meetings_view.item(item, "values")[0]
         participants = Utils.get_participants(meeting_id)
@@ -330,16 +409,29 @@ class MeetingScheduler:
 
     @staticmethod
     def fix_hour(hour):
+        """
+        Add a starting 0 to hours lower than 10
+        :param hour: the hour
+        :return: String (hour with preceding 0 if lower than 10)
+        """
         if int(hour) < 10:
             return f"0{hour}"
         return f"{hour}"
 
     @staticmethod
-    def treeview_sort_column(tv, col, reverse):
-        rows = [(tv.set(k, col), k) for k in tv.get_children('')]
+    def treeview_sort_column(tree_view, col, reverse):
+        """
+        Sorts a tree view by a selected column
+        :param tree_view: the tree view
+        :param col: the selected column
+        :param reverse: type of sorting
+        :return: None
+        """
+
+        rows = [(tree_view.set(k, col), k) for k in tree_view.get_children('')]
         rows.sort(reverse=reverse)
 
         for index, (val, k) in enumerate(rows):
-            tv.move(k, '', index)
+            tree_view.move(k, '', index)
 
-        tv.heading(col, command=lambda: MeetingScheduler.treeview_sort_column(tv, col, not reverse))
+        tree_view.heading(col, command=lambda: MeetingScheduler.treeview_sort_column(tree_view, col, not reverse))
