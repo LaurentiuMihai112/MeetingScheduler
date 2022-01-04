@@ -63,6 +63,8 @@ class MeetingScheduler:
         self.description_frame = None
         self.description_entry = None
         self.file_content = None
+        self.view_button = None
+        self.name_entry = None
         self.window.mainloop()
 
     def add_command(self):
@@ -167,8 +169,7 @@ class MeetingScheduler:
         self.destroy_content_frame()
         self.content_frame = tk.Frame()
         self.content_frame.pack(side='left')
-        meetings = Utils.get_all_meetings(datetime.datetime.now() - datetime.timedelta(days=1000),
-                                          datetime.datetime.now() + datetime.timedelta(days=1000))
+
         self.meetings_view = ttk.Treeview(self.content_frame, show='headings')
         self.meetings_view.bind('<Double-1>', self.update_participants)
         columns = ("meeting_id", "meeting_start", "meeting_end")
@@ -185,22 +186,45 @@ class MeetingScheduler:
         self.meetings_view.heading("meeting_id", text="Id", anchor=CENTER)
         self.meetings_view.heading("meeting_start", text="Start Date", anchor=CENTER)
         self.meetings_view.heading("meeting_end", text="End Date", anchor=CENTER)
+
+        self.description_frame = tk.Frame(self.content_frame)
+        tk.Label(self.description_frame, text='Description').grid(row=0, column=0)
+        self.description_entry = tk.Text(self.description_frame, height=10, width=30)
+        current_date = datetime.datetime.now()
+        self.start_date_calendar = tkcalendar.Calendar(self.content_frame, year=int(current_date.strftime('%Y')),
+                                                       month=int(current_date.strftime('%m')),
+                                                       day=int(current_date.strftime('%d')))
+
+        self.end_date_calendar = tkcalendar.Calendar(self.content_frame, year=int(current_date.strftime('%Y')),
+                                                     month=int(current_date.strftime('%m')),
+                                                     day=int(current_date.strftime('%d')))
+        self.participants_frame = tk.Frame(self.content_frame)
+        self.participants_label = tk.Label(self.participants_frame, text='Participants')
+        self.participants_listbox = tk.Listbox(self.participants_frame, height=10, width=40, justify='center')
+        self.view_button = tk.Button(self.content_frame, text='View\nMeetings', activebackground='#4B93B7',
+                                     bg='#64CBFF', padx=10, pady=10, command=self.view_meetings)
+        self.view_button.grid(row=0, column=2, padx=10, pady=10)
+        self.meetings_view.grid(row=1, column=0, padx=10, pady=10)
+        self.participants_frame.grid(row=1, column=1, padx=10, pady=10)
+        self.participants_label.grid(row=0, column=0, padx=10, pady=10)
+        self.participants_listbox.grid(row=1, column=0, padx=10, pady=10)
+        self.start_date_calendar.grid(row=0, column=0, padx=10, pady=10)
+        self.end_date_calendar.grid(row=0, column=1, padx=10, pady=10)
+        self.description_entry.grid(row=1, column=0, padx=10, pady=10)
+        self.description_frame.grid(row=1, column=2, padx=10, pady=10)
+        # view meetings logic
+
+    def view_meetings(self):
+        print(self.start_date_calendar.get_date())
+        print(self.end_date_calendar.get_date())
+        meetings = Utils.get_all_meetings(self.start_date_calendar.get_date(),
+                                          self.end_date_calendar.get_date())
+        print(meetings)
+        for i in self.meetings_view.get_children():
+            self.meetings_view.delete(i)
         for i, m in enumerate(meetings):
             self.meetings_view.insert(parent='', index='end', iid=i, text='', values=m)
-        self.description_frame = tk.Frame(self.content_frame)
-        tk.Label(self.description_frame, text='Description').pack(side='top')
-        self.description_entry = tk.Text(self.description_frame, height=10, width=30)
-
-        self.meetings_view.pack(side='left', padx=10, pady=10)
-        self.participants_frame = tk.Frame(self.content_frame)
-        self.participants_frame.pack(side='left', padx=10)
-        self.participants_label = tk.Label(self.participants_frame, text='Participants')
-        self.participants_label.pack(side='top')
-        self.participants_listbox = tk.Listbox(self.participants_frame, height=10, width=40, justify='center')
-        self.participants_listbox.pack(side='top')
-        self.description_entry.pack(side='top')
-        self.description_frame.pack(side='left')
-        # view meetings logic
+        self.window.update()
 
     def export_command(self):
         """
@@ -297,7 +321,7 @@ class MeetingScheduler:
                     m_id = Utils.get_meeting_id(dtstart.dt, dtend.dt)
                     Utils.add_participants(m_id, p_id)
         except Exception as _:
-            tk.messagebox.showerror(title="Name Error",message="You must provide a name")
+            tk.messagebox.showerror(title="Name Error", message="You must provide a name")
 
     def add_person_to_database(self):
         """
