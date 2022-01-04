@@ -34,6 +34,7 @@ class Utils:
             cursor = Utils.connection.cursor()
             cursor.execute(sql, val)
             Utils.connection.commit()
+            cursor.close()
         except Exception as e:
             print(str(e))
             return False
@@ -112,8 +113,15 @@ class Utils:
         :return: True if the participants was added, False otherwise
         """
         try:
-            sql = "INSERT INTO MeetingParticipants VALUES (%s, %s)"
             val = (meeting_id, person_id)
+            sql = "SELECT * FROM MeetingParticipants WHERE meeting_id=%s and person_id=%s"
+            cursor = Utils.connection.cursor()
+            cursor.execute(sql, val)
+            status = cursor.fetchone()
+            if status is not None:
+                cursor.close()
+                return True
+            sql = "INSERT INTO MeetingParticipants VALUES (%s, %s)"
             cursor = Utils.connection.cursor()
             cursor.execute(sql, val)
             Utils.connection.commit()
@@ -166,14 +174,16 @@ class Utils:
 
         :param start_date:
         :param end_date:
-        :return:
+        :return: Dictionary of Meetings
         """
         try:
             sql = "SELECT * FROM Meetings WHERE startdate>=%s AND enddate<=%s"
             val = (start_date, end_date)
             cursor = Utils.connection.cursor()
             cursor.execute(sql, val)
-            return cursor.fetchall()
+            data = cursor.fetchall()
+            cursor.close()
+            return data
         except Exception as e:
             return str(e)
 
