@@ -215,11 +215,8 @@ class MeetingScheduler:
         # view meetings logic
 
     def view_meetings(self):
-        print(self.start_date_calendar.get_date())
-        print(self.end_date_calendar.get_date())
         meetings = Utils.get_all_meetings(self.start_date_calendar.get_date(),
                                           self.end_date_calendar.get_date())
-        print(meetings)
         for i in self.meetings_view.get_children():
             self.meetings_view.delete(i)
         for i, m in enumerate(meetings):
@@ -297,7 +294,6 @@ class MeetingScheduler:
             lastname, firstname = str(self.name_entry.get()).split(' ')
             lastname = str(lastname).capitalize()
             firstname = str(firstname).capitalize()
-            print(lastname + " " + firstname)
             status = Utils.get_person_id(lastname, firstname)
             status_second = Utils.get_person_id(firstname, lastname)
             if status:
@@ -311,9 +307,6 @@ class MeetingScheduler:
 
             for component in file_calendar.walk():
                 if component.name == "VEVENT":
-                    print(component.get('summary'))
-                    print(component.get('dtstart').dt)
-                    print(component.get('dtend').dt)
                     summary = component.get('summary')
                     dtstart = component.get('dtstart')
                     dtend = component.get('dtend')
@@ -398,7 +391,6 @@ class MeetingScheduler:
         :param end_date: end date
         :return: None
         """
-        print("exporting")
         meetings = Utils.get_all_meetings(start_date, end_date)
         cal = icalendar.Calendar()
         name = f"{str(start_date).replace(' ', '_').replace('/', '.')[:10]}-" \
