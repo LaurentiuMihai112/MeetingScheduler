@@ -1,2 +1,2 @@
 # MeetingScheduler
-![Task](Task.png)
+![Task](MeetingScheduler/Task.png)
